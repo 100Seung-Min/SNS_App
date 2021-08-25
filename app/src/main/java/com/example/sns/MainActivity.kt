@@ -1,3 +1,4 @@
+
 package com.example.sns
 
 import androidx.appcompat.app.AppCompatActivity
