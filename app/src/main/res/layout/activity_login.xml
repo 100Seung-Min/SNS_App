@@ -22,7 +22,7 @@
             android:src="@drawable/logo_title"/>
     </LinearLayout>
 
-    <androidx.core.widget.ContentLoadingProgressBar
+    <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
