@@ -57,33 +57,45 @@ class DetailviewFragment : Fragment() {
         init {
             contentDTOs = ArrayList()
             contentUidList = ArrayList()
-            var uid = FirebaseAuth.getInstance().currentUser?.uid
-            firestore?.collection("users")?.document(uid!!)?.get()?.addOnCompleteListener { task ->
-                if(task.isSuccessful) {
-                    var userDTO = task.result.toObject(FollowDTO::class.java)
-                    if(userDTO?.followings != null) {
-                        getContents(userDTO?.followings)
-                    }
+            imageSnapshot = firestore?.collection("images")?.orderBy("timestamp")?.
+            addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                contentDTOs.clear()
+                contentUidList.clear()
+                if(querySnapshot == null) return@addSnapshotListener
+                for (snapshot in querySnapshot!!.documents) {
+                        contentDTOs.add(snapshot.toObject(ContentDTO::class.java)!!)
+                        contentUidList.add(snapshot.id)
                 }
+                notifyDataSetChanged()
             }
         }
-        fun getContents(followers: MutableMap<String, Boolean>) {
-            imageSnapshot = firestore?.collection("images")?.orderBy("timestamp")?.
-                    addSnapshotListener { querySnapshot, firebaseFirestoreException ->
-                        contentDTOs.clear()
-                        contentUidList.clear()
-                        if(querySnapshot == null) return@addSnapshotListener
-                        for (snapshot in querySnapshot!!.documents) {
-                            var item = snapshot.toObject(ContentDTO::class.java)!!
-                            println(item.uid)
-                            if(followers?.keys?.contains(item.uid)!!) {
-                                contentDTOs.add(item)
-                                contentUidList.add(snapshot.id)
-                            }
-                        }
-                        notifyDataSetChanged()
-                    }
-        }
+
+//            var uid = FirebaseAuth.getInstance().currentUser?.uid
+//            firestore?.collection("users")?.document(uid!!)?.get()?.addOnCompleteListener { task ->
+//                if(task.isSuccessful) {
+//                    var userDTO = task.result.toObject(FollowDTO::class.java)
+//                    if(userDTO?.followings != null) {
+//                        getContents(userDTO?.followings)
+//                    }
+//                }
+//            }
+//        }
+//        fun getContents(followers: MutableMap<String, Boolean>?) {
+//            imageSnapshot = firestore?.collection("images")?.orderBy("timestamp")?.
+//            addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+//                contentDTOs.clear()
+//                contentUidList.clear()
+//                if(querySnapshot == null) return@addSnapshotListener
+//                for (snapshot in querySnapshot!!.documents) {
+//                    var item = snapshot.toObject(ContentDTO::class.java)!!
+//                    if(followers?.keys?.contains(item.uid)!!) {
+//                        contentDTOs.add(item)
+//                        contentUidList.add(snapshot.id)
+//                    }
+//                }
+//                notifyDataSetChanged()
+//            }
+//        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.item_detail, parent, false)
@@ -92,6 +104,7 @@ class DetailviewFragment : Fragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val viewHolder = (holder as CustomViewHolder).itemView
+            var i = 0
             //profile image 가져오기
             firestore?.collection("profileImages")?.document(contentDTOs[position].uid!!)
                     ?.get()?.addOnCompleteListener { task ->
@@ -100,12 +113,12 @@ class DetailviewFragment : Fragment() {
                             val url = task.result["image"]
                             Glide.with(holder.itemView.context)
                                     .load(url)
-                                    .apply(RequestOptions().circleCrop()).into(viewHolder.findViewById(R.id.detailviewitem_profile_image))
-
+                                    .apply(RequestOptions().circleCrop())
+                                    .into(viewHolder.findViewById(R.id.detailviewitem_profile_image))
                         }
                     }
             //userfragment로 이동
-            viewHolder.findViewById<RecyclerView>(R.id.detailviewitem_profile_image).setOnClickListener {
+            viewHolder.findViewById<ImageView>(R.id.detailviewitem_profile_image).setOnClickListener {
                 val fragment = UserFragment()
                 val bundle = Bundle()
                 bundle.putString("destinationUID", contentDTOs[position].uid)
@@ -121,6 +134,7 @@ class DetailviewFragment : Fragment() {
             Glide.with(holder.itemView.context)
                     .load(contentDTOs[position].imageUrl)
                     .into(viewHolder.findViewById(R.id.detailviewitem_imageview_content))
+            println(contentDTOs[position].imageUrl + "${position} 번째")
             //설명 텍스트
             viewHolder.findViewById<TextView>(R.id.detailviewitem_explain_textview).text = contentDTOs[position].explain
             //좋아요 이벤트

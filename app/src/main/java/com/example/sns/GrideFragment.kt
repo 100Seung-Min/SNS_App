@@ -5,55 +5,70 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [GrideFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class GrideFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    var imageSnapshot:ListenerRegistration? = null
+    var mainView: View? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_gride2, container, false)
+        mainView = inflater.inflate(R.layout.fragment_gride, container, false)
+        return mainView
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment GrideFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            GrideFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onResume() {
+        super.onResume()
+        mainView?.findViewById<RecyclerView>(R.id.gridfragment_recyclerview)?.adapter = GrideFragmentRecyclerViewAdatper()
+        mainView?.findViewById<RecyclerView>(R.id.gridfragment_recyclerview)?.layoutManager = GridLayoutManager(activity, 3)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        imageSnapshot?.remove()
+    }
+    inner class GrideFragmentRecyclerViewAdatper : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+        var contentDTOs: ArrayList<ContentDTO>
+        init {
+            contentDTOs = ArrayList()
+            imageSnapshot = FirebaseFirestore
+                .getInstance().collection("images").orderBy("timestamp")?.addSnapshotListener { querySnapshot, firebasefirestoreException ->
+                    contentDTOs.clear()
+                    for (snapshot in querySnapshot!!.documents) {
+                        contentDTOs.add(snapshot.toObject(ContentDTO::class.java)!!)
+                    }
+                    notifyDataSetChanged()
                 }
             }
-    }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            //현재 사이즈 뷰 화면 가로 크기의 1/3값을 가지고 오기
+            val width = resources.displayMetrics.widthPixels / 3
+
+            val imageView = ImageView(parent.context)
+            imageView.layoutParams = LinearLayout.LayoutParams(width, width)
+            return CustomViewHolder(imageView)
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            var imageView = (holder as CustomViewHolder).imageView
+            Glide.with(holder.itemView.context)
+                .load(contentDTOs[position].imageUrl)
+                .apply(RequestOptions().centerCrop())
+                .into(imageView)
+        }
+
+        override fun getItemCount(): Int {
+            return contentDTOs.size
+        }
+        inner class CustomViewHolder(var imageView: ImageView): RecyclerView.ViewHolder(imageView)
+        }
 }
