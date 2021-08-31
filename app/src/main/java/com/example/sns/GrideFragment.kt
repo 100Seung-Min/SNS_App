@@ -35,19 +35,21 @@ class GrideFragment : Fragment() {
         super.onStop()
         imageSnapshot?.remove()
     }
-    inner class GrideFragmentRecyclerViewAdatper : RecyclerView.Adapter<RecyclerView.ViewHolder>(){
+    inner class GrideFragmentRecyclerViewAdatper : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         var contentDTOs: ArrayList<ContentDTO>
+
         init {
             contentDTOs = ArrayList()
             imageSnapshot = FirebaseFirestore
-                .getInstance().collection("images").orderBy("timestamp")?.addSnapshotListener { querySnapshot, firebasefirestoreException ->
+                .getInstance().collection("images").orderBy("timestamp")
+                ?.addSnapshotListener { querySnapshot, firebasefirestoreException ->
                     contentDTOs.clear()
                     for (snapshot in querySnapshot!!.documents) {
                         contentDTOs.add(snapshot.toObject(ContentDTO::class.java)!!)
                     }
                     notifyDataSetChanged()
                 }
-            }
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             //현재 사이즈 뷰 화면 가로 크기의 1/3값을 가지고 오기
@@ -69,6 +71,7 @@ class GrideFragment : Fragment() {
         override fun getItemCount(): Int {
             return contentDTOs.size
         }
-        inner class CustomViewHolder(var imageView: ImageView): RecyclerView.ViewHolder(imageView)
-        }
+
+        inner class CustomViewHolder(var imageView: ImageView) : RecyclerView.ViewHolder(imageView)
+    }
 }

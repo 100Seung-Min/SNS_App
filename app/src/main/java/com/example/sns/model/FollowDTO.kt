@@ -1,4 +1,4 @@
-package com.example.sns.model
+package com.example.sns
 
 import java.util.HashMap
 

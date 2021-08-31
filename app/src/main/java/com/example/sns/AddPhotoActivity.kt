@@ -70,7 +70,6 @@ class AddPhotoActivity : AppCompatActivity() {
                 val contentDTO = ContentDTO()
                 //이미지주소
                 contentDTO.imageUrl = uri!!.toString()
-                println(contentDTO.imageUrl + "두 번쨰 1")
                 //유저의 UID
                 contentDTO.uid = auth?.currentUser?.uid
                 //게시물의 설명

@@ -1,5 +1,6 @@
 package com.example.sns
 
+import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -14,8 +15,13 @@ import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 
 class MainActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
+
+    val PICK_PROFILE_FROM_ALBUM = 10
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -33,6 +39,36 @@ class MainActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
         findViewById<ImageView>(R.id.toolbar_title_image).visibility = View.VISIBLE
         findViewById<ImageView>(R.id.toolbar_btn_back).visibility = View.GONE
         findViewById<TextView>(R.id.toolbar_username).visibility = View.GONE
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == PICK_PROFILE_FROM_ALBUM && resultCode == Activity.RESULT_OK) {
+            var imageUri = data?.data
+
+            //유저 Uid
+            val uid = FirebaseAuth.getInstance().currentUser!!.uid
+            //파일 업로드
+            FirebaseStorage
+                .getInstance()
+                .reference
+                .child("userProfileImages")
+                .child(uid)
+                .putFile(imageUri!!)
+                .addOnSuccessListener { task ->
+                    FirebaseStorage
+                        .getInstance()
+                        .reference
+                        .child("userProfileImages")
+                        .child(uid)
+                        .downloadUrl
+                        .addOnSuccessListener { task ->
+                            val url = task.toString()
+                            val map = HashMap<String, Any>()
+                            map["image"] = url
+                            FirebaseFirestore.getInstance().collection("profileImages").document(uid).set(map)
+                        }
+                }
+        }
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {

@@ -13,13 +13,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.example.sns.model.FollowDTO
 import com.example.sns.modelpackage.AlarmDTO
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import org.w3c.dom.Text
 
 class DetailviewFragment : Fragment() {
     var user: FirebaseUser? = null
@@ -121,7 +119,7 @@ class DetailviewFragment : Fragment() {
             viewHolder.findViewById<ImageView>(R.id.detailviewitem_profile_image).setOnClickListener {
                 val fragment = UserFragment()
                 val bundle = Bundle()
-                bundle.putString("destinationUID", contentDTOs[position].uid)
+                bundle.putString("destinationUid", contentDTOs[position].uid)
                 bundle.putString("userId", contentDTOs[position].userId)
                 fragment.arguments = bundle
                 activity!!.supportFragmentManager.beginTransaction()
@@ -134,7 +132,6 @@ class DetailviewFragment : Fragment() {
             Glide.with(holder.itemView.context)
                     .load(contentDTOs[position].imageUrl)
                     .into(viewHolder.findViewById(R.id.detailviewitem_imageview_content))
-            println(contentDTOs[position].imageUrl + "${position} 번째")
             //설명 텍스트
             viewHolder.findViewById<TextView>(R.id.detailviewitem_explain_textview).text = contentDTOs[position].explain
             //좋아요 이벤트
