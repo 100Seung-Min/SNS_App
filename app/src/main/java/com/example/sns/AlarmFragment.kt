@@ -5,53 +5,81 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.view.menu.MenuView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.example.sns.modelpackage.AlarmDTO
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [AlertFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class AlarmFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val view = inflater.inflate(R.layout.fragment_alarm, container, false)
+        view.findViewById<RecyclerView>(R.id.alarmfragment_recyclerview).adapter = AlarmRecyclerViewAdapter()
+        view.findViewById<RecyclerView>(R.id.alarmfragment_recyclerview).layoutManager = LinearLayoutManager(activity)
+        return view
     }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_alarm, container, false)
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AlertFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-                AlarmFragment().apply {
-                    arguments = Bundle().apply {
-                        putString(ARG_PARAM1, param1)
-                        putString(ARG_PARAM2, param2)
+    inner
+    class AlarmRecyclerViewAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        val alarmDTOList = ArrayList<AlarmDTO>()
+        init {
+            val uid = FirebaseAuth.getInstance().currentUser!!.uid
+            FirebaseFirestore
+                    .getInstance()
+                    .collection("alarms")
+                    .whereEqualTo("destinationUid", uid)
+                    .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                        alarmDTOList.clear()
+                        if(querySnapshot == null) return@addSnapshotListener
+                        for(snapshot in querySnapshot?.documents!!) {
+                            alarmDTOList.add(snapshot.toObject(AlarmDTO::class.java)!!)
+                        }
+                        alarmDTOList.sortByDescending { it.timestamp }
+                        notifyDataSetChanged()
                     }
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_comment, parent, false)
+            return CustomViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            val profileImage = holder.itemView.findViewById<ImageView>(R.id.commentviewitem_imageview_profile)
+            val commentTextView = holder.itemView.findViewById<TextView>(R.id.commentviewitem_textview_profile)
+            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOList[position].uid!!).get()
+                    .addOnCompleteListener { task ->
+                        if(task.isSuccessful) {
+                            val url = task.result["image"]
+                            Glide.with(activity)
+                                    .load(url)
+                                    .apply(RequestOptions().circleCrop())
+                                    .into(profileImage)
+                        }
+                    }
+            when ( alarmDTOList[position].kind) {
+                0 -> {
+                    val str_0 = alarmDTOList[position].userId + getString(R.string.alarm_favorite)
+                    commentTextView.text = str_0
                 }
+                1 -> {
+                    val str_1 = alarmDTOList[position].userId + getString(R.string.alarm_comment)
+                    commentTextView.text = str_1
+                }
+                2 -> {
+                    val str_2 = alarmDTOList[position].userId + getString(R.string.alarm_fllow)
+                    commentTextView.text = str_2
+                }
+            }
+        }
+
+        override fun getItemCount(): Int {
+            return alarmDTOList.size
+        }
+        inner class CustomViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     }
 }
