@@ -55,7 +55,7 @@ class AlarmFragment : Fragment() {
                     .addOnCompleteListener { task ->
                         if(task.isSuccessful) {
                             val url = task.result["image"]
-                            Glide.with(activity)
+                            Glide.with(activity!!)
                                     .load(url)
                                     .apply(RequestOptions().circleCrop())
                                     .into(profileImage)
