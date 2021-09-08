@@ -102,7 +102,6 @@ class DetailviewFragment : Fragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val viewHolder = (holder as CustomViewHolder).itemView
-            var i = 0
             //profile image 가져오기
             firestore?.collection("profileImages")?.document(contentDTOs[position].uid!!)
                     ?.get()?.addOnCompleteListener { task ->
