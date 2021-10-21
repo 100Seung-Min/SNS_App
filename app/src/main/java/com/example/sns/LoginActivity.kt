@@ -95,7 +95,6 @@ class LoginActivity : AppCompatActivity() {
 
     fun facebookLogin() {
         findViewById<ProgressBar>(R.id.progress_bar).visibility = View.VISIBLE
-
         LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList("public_profile", "email"))
         LoginManager.getInstance().registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
             override fun onSuccess(loginResult: LoginResult) {
